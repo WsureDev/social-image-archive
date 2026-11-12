@@ -1,0 +1,86 @@
+# Copy to compose.yaml and configure .env before deployment.
+name: social-image-archive
+
+services:
+  archive:
+    container_name: social-image-archive
+    image: local/social-image-archive:bun-1.4.4
+    build:
+      context: .
+      network: host
+      args:
+        HTTP_PROXY: ${ARCHIVE_HTTP_PROXY:-}
+        HTTPS_PROXY: ${ARCHIVE_HTTP_PROXY:-}
+    init: true
+    restart: unless-stopped
+    # Linux host networking keeps the existing loopback HTTP proxy reachable.
+    network_mode: host
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      HOME: /home/bun
+      XDG_CONFIG_HOME: /home/bun/.config
+      QUEUE_WORKER_URL: ${QUEUE_WORKER_URL:?Set QUEUE_WORKER_URL in .env}
+      CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:?Set CF_ACCOUNT_ID in .env}
+      CF_QUEUE_ID: ${CF_QUEUE_ID:?Set CF_QUEUE_ID in .env}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      ARCHIVE_DIR: /app/data
+      HOST: 0.0.0.0
+      PORT: ${PORT:-19280}
+      MCP_MAX_PICK: ${MCP_MAX_PICK:-3}
+      MCP_TRUST_PROXY: ${MCP_TRUST_PROXY:-false}
+      POLL_SECONDS: ${POLL_SECONDS:-60}
+      HTTP_PROXY: ${ARCHIVE_HTTP_PROXY:-}
+      HTTPS_PROXY: ${ARCHIVE_HTTP_PROXY:-}
+      NO_PROXY: ${ARCHIVE_NO_PROXY:-localhost,127.0.0.1}
+      WRANGLER_LOG_PATH: /app/data/.wrangler/auth.log
+      WRANGLER_SEND_METRICS: "false"
+      SHARE_CONFIG_FILE: /app/publisher.config.json
+      SHARE_TOKEN_FILE: /app/publisher-secrets/github-token
+      SHARE_STATE_DIR: /app/publisher-state
+    volumes:
+      - type: bind
+        source: ./publisher.config.json
+        target: /app/publisher.config.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./.secrets
+        target: /app/publisher-secrets
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./publisher-state
+        target: /app/publisher-state
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./data-docker
+        target: /app/data
+        bind:
+          create_host_path: false
+      # Writable so Wrangler can refresh OAuth; credentials stay outside the image.
+      - type: bind
+        source: ${WRANGLER_AUTH_DIR:-./.wrangler-auth}
+        target: /home/bun/.config/.wrangler/config
+        bind:
+          create_host_path: false
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - |
+          const response = await fetch('http://127.0.0.1:' + process.env.PORT + '/health', { signal: AbortSignal.timeout(3000) })
+          process.exit(Number(!response.ok))
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 150s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

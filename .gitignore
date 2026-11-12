@@ -1,0 +1,15 @@
+node_modules/
+.wrangler/
+.env
+.dev.vars
+data/
+dist/
+.runtime/
+data-docker/
+publisher.env
+publisher.config.json
+.secrets/
+publisher-state/
+wrangler.jsonc
+compose.yaml
+.wrangler-auth/

@@ -1,0 +1,52 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "social-image-queue",
+  "account_id": "00000000000000000000000000000000",
+  "main": "src/cloud/app.ts",
+  "workers_dev": true,
+  "routes": [],
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "upload_source_maps": true,
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "IMAGES",
+        "queue": "social-images"
+      },
+      {
+        "binding": "DEADLINES",
+        "queue": "social-image-deadlines"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "social-image-deadlines",
+        "max_batch_size": 25,
+        "max_retries": 10
+      }
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "0 3 * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "social-image-queue",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

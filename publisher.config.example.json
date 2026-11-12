@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "repositoryName": "x-image-archive",
+  "branch": "main",
+  "timezone": "Asia/Shanghai",
+  "dailyTime": "03:15"
+}

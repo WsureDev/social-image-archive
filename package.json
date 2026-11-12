@@ -1,0 +1,40 @@
+{
+  "name": "social-image-archive",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "bun": ">=1.4.4"
+  },
+  "scripts": {
+    "start": "bun run build:gallery && bun src/local/start.ts",
+    "dev:cloud": "wrangler dev --local --port 8787",
+    "dev:local": "bun run build:gallery && bun src/local/main.ts",
+    "consume": "bun src/local/consume.ts",
+    "check": "tsc --noEmit && tsc --noEmit --project src/gallery/tsconfig.json",
+    "test": "bun test",
+    "types": "wrangler types",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply social-image-queue --local",
+    "build:gallery": "bun scripts/build-gallery.ts",
+    "share:publish": "bash scripts/share-publish.sh publish",
+    "share:preview": "bash scripts/share-publish.sh preview",
+    "share:status": "bash scripts/share-publish.sh status"
+  },
+  "dependencies": {
+    "@hono/standard-validator": "0.4.1",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@tabler/core": "1.7.3",
+    "hono": "4.13.14",
+    "photoswipe": "5.4.4",
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "@types/node": "26.6.6",
+    "purgecss": "8.0.0",
+    "typescript": "7.0.2",
+    "wrangler": "4.156.0"
+  }
+}

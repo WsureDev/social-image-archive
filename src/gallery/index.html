@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>图档 · 图片收藏</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="navbar navbar-dark archive-header">
+      <div class="container-xl">
+        <a class="navbar-brand archive-brand" href="/" aria-label="图档首页"><span class="brand-mark">▧</span>图档<span class="brand-caption">IMAGE ARCHIVE</span></a>
+        <span class="header-note">收集灵感，随时翻阅</span>
+      </div>
+    </header>
+    <main class="page-wrapper">
+      <div class="container-xl">
+        <div class="page-header d-print-none">
+          <div class="row align-items-center g-3">
+            <div class="col">
+              <div class="page-pretitle">YOUR COLLECTION</div>
+              <h1 class="page-title">图片收藏</h1>
+              <div class="text-secondary mt-2">按作者、标签和时间，找到你想看的那一张。</div>
+            </div>
+            <div class="col-auto page-actions">
+              <a id="export" class="btn btn-outline-secondary" href="/api/export.jsonl" download title="导出全部图片的来源链接、标签、作者和时间">导出 JSONL</a>
+              <button id="mark-page" class="btn btn-outline-warning" type="button">标记本页</button>
+              <button id="mark-delete" class="btn btn-outline-danger" type="button">标记选中</button>
+              <button id="delete-marked" class="btn btn-danger" type="button" disabled>确认删除 0 张</button>
+              <button id="shuffle" class="btn btn-outline-primary" type="button">↝ 随机看看</button>
+              <button id="refresh" class="btn btn-primary" type="button">刷新收藏</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="card filter-card mt-4" aria-label="查询与筛选">
+          <form id="filters">
+            <div class="card-body">
+              <div class="row g-3 align-items-end">
+                <div class="col-lg-8 col-md-7">
+                  <label class="form-label" for="search">搜索收藏</label>
+                  <input id="search" name="q" class="form-control form-control-lg" placeholder="搜索作者、标签或平台…" autocomplete="off">
+                </div>
+                <div class="col-lg-4 col-md-5 filter-actions">
+                  <button class="btn btn-primary btn-lg" type="submit">查询图片</button>
+                  <button id="reset" class="btn btn-outline-secondary btn-lg" type="button">清空条件</button>
+                </div>
+              </div>
+              <details class="advanced-filters" open>
+                <summary>筛选条件<span class="text-secondary">作者 · 标签 · 平台 · 时间</span></summary>
+                <div class="row g-3 mt-0">
+                  <div class="col-md-4 col-lg-3"><label class="form-label" for="author">作者</label><input id="author" name="author" list="author-options" class="form-control" placeholder="作者 ID 或名称"><datalist id="author-options"></datalist></div>
+                  <div class="col-md-4 col-lg-3"><label class="form-label" for="tag">标签</label><input id="tag" name="tag" list="tag-options" class="form-control" placeholder="选择或输入标签"><datalist id="tag-options"></datalist></div>
+                  <div class="col-md-4 col-lg-2"><label class="form-label" for="platform">平台</label><select id="platform" name="platform" class="form-select"><option value="">全部平台</option></select></div>
+                  <div class="col-md-6 col-lg-2"><label class="form-label" for="from">开始日期</label><input id="from" name="from" type="date" class="form-control"></div>
+                  <div class="col-md-6 col-lg-2"><label class="form-label" for="to">结束日期</label><input id="to" name="to" type="date" class="form-control"></div>
+                  <div class="col-12"><span id="date-range" class="form-hint">有效数据范围：正在读取…</span></div>
+                </div>
+              </details>
+            </div>
+            <div class="card-footer filter-footer">
+              <span class="text-secondary small">点击图片进入连续浏览，方向键切图，Esc 退出。</span>
+              <div class="display-options">
+                <label for="order" class="text-secondary small">排序</label>
+                <select id="order" name="order" class="form-select form-select-sm"><option value="newest">最新发布</option><option value="oldest">最早发布</option><option value="random">随机顺序</option></select>
+                <label for="limit" class="text-secondary small">每页</label>
+                <select id="limit" name="limit" class="form-select form-select-sm"><option value="24">24 张</option><option value="48">48 张</option><option value="96">96 张</option></select>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="results-section" aria-label="图片结果">
+          <div class="results-toolbar">
+            <div><h2 id="result-title" class="m-0">全部收藏</h2><p id="status" class="text-secondary mb-0 mt-1" role="status" aria-live="polite">正在加载…</p></div>
+            <nav class="pager" aria-label="顶部分页"></nav>
+          </div>
+          <div id="error" class="alert alert-danger" role="alert" hidden></div>
+          <div id="empty" class="card empty-state" hidden><div class="empty"><div class="empty-icon">⌕</div><p class="empty-title">没有找到匹配的图片</p><p class="empty-subtitle text-secondary">试着换个关键词，或减少筛选条件。</p><button id="empty-reset" type="button" class="btn btn-primary">查看全部收藏</button></div></div>
+          <div id="images" class="archive-gallery" aria-busy="true"></div>
+          <footer class="results-footer">
+            <span id="range" class="text-secondary"></span>
+            <nav class="pager" aria-label="底部分页"></nav>
+            <form id="jump" class="page-jump"><label for="page-number">前往</label><input id="page-number" type="number" min="1" value="1" class="form-control form-control-sm" aria-label="跳转页码"><button type="submit" class="btn btn-sm btn-outline-secondary">跳转</button></form>
+          </footer>
+        </section>
+        <footer class="archive-footer text-secondary">图档 · 留住值得收藏的画面</footer>
+      </div>
+    </main>
+  </div>
+  <template id="image-card">
+    <article class="card archive-card">
+      <a class="image-link" aria-label="打开图片"><img width="480" height="360" loading="lazy" decoding="async" alt=""></a>
+      <div class="card-body">
+        <div class="card-heading"><span class="image-author"></span><span class="badge bg-blue-lt image-platform"></span></div>
+        <time class="image-time text-secondary"></time>
+        <div class="image-tags"></div>
+      </div>
+      <div class="card-footer"><span class="image-size text-secondary"></span><div class="image-links"><a class="post-link" target="_blank" rel="noopener">原帖 ↗</a><a class="original-link" target="_blank" rel="noopener">原图 ↗</a></div></div>
+    </article>
+  </template>
+</body>
+</html>

@@ -1,0 +1,12 @@
+*
+!Dockerfile
+!package.json
+!bun.lock
+!src/
+!src/**
+!scripts/
+!scripts/**
+!share-template/
+!share-template/**
+!node_modules/
+!node_modules/**
